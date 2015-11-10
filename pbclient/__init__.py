@@ -12,6 +12,8 @@ _opts = dict()
 
 import requests
 import json
+import six
+
 
 OFFSET_WARNING = """
     INFO: you can use keyset pagination to get faster responses from the server.
@@ -50,7 +52,8 @@ def _pybossa_req(method, domain, id=None, payload=None, params={}):
     elif method == 'delete':
         r = requests.delete(url, params=params, headers=headers,
                             data=json.dumps(payload))
-    if r.status_code / 100 == 2:
+
+    if r.status_code // 100 == 2: # PEP 238: Use the // floor division operator
         if r.text and r.text != '""':
             return json.loads(r.text)
         else:
@@ -152,7 +155,7 @@ def get_projects(limit=100, offset=0, last_id=None):
     if last_id is not None:
         params = dict(limit=limit, last_id=last_id)
     else:
-        print OFFSET_WARNING
+        six.print_(OFFSET_WARNING)
         params = dict(limit=limit, offset=offset)
     try:
         res = _pybossa_req('get', 'project',
@@ -283,7 +286,7 @@ def get_categories(limit=20, offset=0, last_id=None):
         params = dict(limit=limit, last_id=last_id)
     else:
         params = dict(limit=limit, offset=offset)
-        print OFFSET_WARNING
+        six.print_(OFFSET_WARNING)
     try:
         res = _pybossa_req('get', 'category',
                            params=params)
@@ -410,7 +413,7 @@ def get_tasks(project_id, limit=100, offset=0, last_id=None):
         params = dict(limit=limit, last_id=last_id)
     else:
         params = dict(limit=limit, offset=offset)
-        print OFFSET_WARNING
+        six.print_(OFFSET_WARNING)
     params['project_id'] = project_id
     try:
         res = _pybossa_req('get', 'task',
@@ -536,7 +539,7 @@ def get_taskruns(project_id, limit=100, offset=0, last_id=None):
         params = dict(limit=limit, last_id=last_id)
     else:
         params = dict(limit=limit, offset=offset)
-        print OFFSET_WARNING
+        six.print_(OFFSET_WARNING)
     params['project_id'] = project_id
     try:
         res = _pybossa_req('get', 'taskrun',
@@ -587,7 +590,8 @@ def delete_taskrun(taskrun_id):
 
 def _forbidden_attributes(obj):
     """Return the object without the forbidden attributes."""
-    for key in obj.data.keys():
-        if key in obj.reserved_keys.keys():
+
+    for key in list(six.iterkeys(obj.data)):
+        if key in list(six.iterkeys(obj.reserved_keys)):
             obj.data.pop(key)
     return obj
